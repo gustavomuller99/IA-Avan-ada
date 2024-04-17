@@ -4,11 +4,11 @@
 #include "state/state8.cpp"
 
 int main(int argc, char **argv) {
-    std::vector<int> testState = {2, 4, 7, 0, 3, 6, 8, 1, 5};
+    std::vector<int> testState = {0, 6, 1, 7, 4, 2, 3, 8, 5};
 
     State8 state = State8(testState);
 
-    ret_info sol = greedy_best_first<State8>(state);
+    ret_info sol = astar<State8>(state);
 
     std::cout << "\n";
     std::cout << sol.expanded << ",";

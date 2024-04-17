@@ -111,7 +111,7 @@ struct QueueNode {
     int pos;
 };
 
-class Compare {
+class GreedyCompare {
 public:
     bool operator() (QueueNode f, QueueNode s)
     {
@@ -136,7 +136,7 @@ ret_info greedy_best_first(State state) {
 
     int cur_pos = 0;
 
-    std::priority_queue<QueueNode, std::deque<QueueNode>, Compare> open;
+    std::priority_queue<QueueNode, std::deque<QueueNode>, GreedyCompare> open;
     open.push({
         n,
         state.h_value(n),
@@ -160,12 +160,81 @@ ret_info greedy_best_first(State state) {
             }
 
             ret.expanded += 1;
-            ret.avg_h += front.h;
+            ret.avg_h += state.h_value(front.node);
 
             for (std::shared_ptr<Node> next: state.succ(front.node)) {
                 open.push(QueueNode {
                     next,
                     state.h_value(next),
+                    next->path_cost,
+                    ++cur_pos
+                });
+            }
+        }
+    }
+
+    end = clock();
+    ret.time = double(end - start) / double(CLOCKS_PER_SEC);
+    return ret;
+}
+
+
+/** A* */
+class AstarCompare {
+public:
+    bool operator() (QueueNode f, QueueNode s)
+    {
+        if (f.h > s.h)
+            return true;
+        if (f.h == s.h && f.g < s.g)
+            return true;
+        if (f.h == s.h && f.g == s.g && f.pos < s.pos)
+            return true;
+        return false;
+    }
+};
+
+template<typename State>
+ret_info astar(State state) {
+    ret_info ret;
+    clock_t start, end;
+    start = clock();
+
+    std::shared_ptr<Node> n = state.init();
+    ret.start_h = state.h_value(n);
+
+    int cur_pos = 0;
+
+    std::priority_queue<QueueNode, std::deque<QueueNode>, AstarCompare> open;
+    open.push({
+        n,
+        state.h_value(n) + n->path_cost,
+        n->path_cost,
+        ++cur_pos
+    });
+
+    std::map<std::string, bool> closed = std::map<std::string, bool>();
+
+    while (!open.empty()) {
+        QueueNode front = open.top();
+        open.pop();
+
+        if (!closed[front.node->toString()]) {
+            closed[front.node->toString()] = true;
+            if (state.is_goal(front.node)) {
+                ret.sol = state.extract_path(front.node);
+                end = clock();
+                ret.time = double(end - start) / double(CLOCKS_PER_SEC);
+                return ret;
+            }
+
+            ret.expanded += 1;
+            ret.avg_h += state.h_value(front.node);
+
+            for (std::shared_ptr<Node> next: state.succ(front.node)) {
+                open.push(QueueNode {
+                    next,
+                    state.h_value(next) + next->path_cost,
                     next->path_cost,
                     ++cur_pos
                 });
