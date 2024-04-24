@@ -13,6 +13,7 @@ struct ret_info {
     std::vector<std::shared_ptr<Node>> sol = {};
     int start_h = 0;
     int avg_h = 0;
+    bool has_failed = false;
 };
 
 /** BFS GRAPH */
@@ -247,6 +248,81 @@ ret_info astar(State state) {
     }
 
     end = clock();
+    ret.time = double(end - start) / double(CLOCKS_PER_SEC);
+    return ret;
+}
+
+
+template<typename State>
+ret_info idastar_iter(State state, int* cutoff) {
+    ret_info ret;
+
+    std::shared_ptr<Node> n = state.init();
+    ret.start_h = state.h_value(n);
+
+    int cur_pos = 0;
+
+    std::priority_queue<QueueNode, std::deque<QueueNode>, AstarCompare> open;
+    open.push({
+        n,
+        state.h_value(n) + n->path_cost,
+        n->path_cost,
+        ++cur_pos
+    });
+
+    std::map<std::string, bool> closed = std::map<std::string, bool>();
+
+    while (!open.empty()) {
+        QueueNode front = open.top();
+        open.pop();
+        if ((front.g + front.h) > *cutoff) {
+            *cutoff = (front.g + front.h);
+            ret.has_failed = true;
+            return ret;
+        }
+        if (!closed[front.node->toString()]) {
+            closed[front.node->toString()] = true;
+            if (state.is_goal(front.node)) {
+                ret.sol = state.extract_path(front.node);
+                return ret;
+            }
+
+            ret.expanded += 1;
+            ret.avg_h += state.h_value(front.node);
+
+            for (std::shared_ptr<Node> next: state.succ(front.node)) {
+                open.push(QueueNode {
+                    next,
+                    state.h_value(next) + next->path_cost,
+                    next->path_cost,
+                    ++cur_pos
+                });
+            }
+        }
+    }
+    ret.has_failed = true;
+    return ret;
+}
+
+
+template<typename State>
+ret_info idastar(State state) {
+    ret_info ret, ret_iter;
+    clock_t start, end;
+    const int max_f = 2000; //nao sei qual o valor certo daqui
+    start = clock();
+
+    std::shared_ptr<Node> n = state.init();
+    ret.start_h = state.h_value(n);
+    int cutoff_f = state.h_value(n);
+
+    while(cutoff_f <= max_f) {
+        ret_iter = idastar_iter(state, &cutoff_f);
+        if(!ret_iter.has_failed) break;
+    }
+
+    end = clock();
+    ret.has_failed = ret_iter.has_failed;
     ret.time = double(end - start) / double(CLOCKS_PER_SEC);
     return ret;
 }

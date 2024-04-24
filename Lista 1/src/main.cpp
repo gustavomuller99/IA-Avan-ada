@@ -2,6 +2,7 @@
 
 #include "solvers/solvers.cpp"
 #include "state/state8.cpp"
+//#include "state/state16.cpp"
 
 template<typename State>
 void solve(std::string alg, State s);
@@ -37,6 +38,7 @@ void solve(std::string alg, State s) {
         f = astar<State>;
 
     ret_info sol = f(s);
+
 
     std::cout << sol.expanded << ",";
     std::cout << sol.sol.size() - 1 << ",";
