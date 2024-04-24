@@ -86,7 +86,7 @@ std::vector<std::shared_ptr<Node>> State16::succ(std::shared_ptr<Node> node) {
                                                 Action::right));
     }
 
-    if (idx / 4 < 4) {
+    if (idx / 4 < 3) {
         std::vector<int> n_state = node->state;
         n_state[idx] = n_state[idx + 4];
         n_state[idx + 4] = 0;
