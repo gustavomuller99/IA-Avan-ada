@@ -29,7 +29,7 @@ void solve(std::string alg, State s) {
         f = bfs_graph<State>;
     if (alg == "-idastar")
         {}
-    if (alg == "-ifs")
+    if (alg == "-idfs")
         f = iter_deep<State>;
     if (alg == "-gbfs")
         f = greedy_best_first<State>;
