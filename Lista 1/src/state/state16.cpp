@@ -58,8 +58,8 @@ std::vector<std::shared_ptr<Node>> State16::succ(std::shared_ptr<Node> node) {
 
     if (idx / 4 > 0) {
         std::vector<int> n_state = node->state;
-        n_state[idx] = n_state[idx - 3];
-        n_state[idx - 3] = 0;
+        n_state[idx] = n_state[idx - 4];
+        n_state[idx - 4] = 0;
         ret.emplace_back(std::make_shared<Node>(n_state,
                                                 node,
                                                 node->path_cost + cost(Action::up),
@@ -86,10 +86,10 @@ std::vector<std::shared_ptr<Node>> State16::succ(std::shared_ptr<Node> node) {
                                                 Action::right));
     }
 
-    if (idx / 4 < 3) {
+    if (idx / 4 < 4) {
         std::vector<int> n_state = node->state;
-        n_state[idx] = n_state[idx + 3];
-        n_state[idx + 3] = 0;
+        n_state[idx] = n_state[idx + 4];
+        n_state[idx + 4] = 0;
         ret.emplace_back(std::make_shared<Node>(n_state,
                                                 node,
                                                 node->path_cost + cost(Action::down),
