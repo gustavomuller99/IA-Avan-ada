@@ -252,56 +252,31 @@ ret_info astar(State state) {
     return ret;
 }
 
-
+std::map<std::string, bool> idastar_closed = std::map<std::string, bool>();
 template<typename State>
-ret_info idastar_iter(State state, int* cutoff) {
-    ret_info ret;
-
-    std::shared_ptr<Node> n = state.init();
-    ret.start_h = state.h_value(n);
-
-    int cur_pos = 0;
-
-    std::priority_queue<QueueNode, std::deque<QueueNode>, AstarCompare> open;
-    open.push({
-        n,
-        state.h_value(n) + n->path_cost,
-        n->path_cost,
-        ++cur_pos
-    });
-
-    std::map<std::string, bool> closed = std::map<std::string, bool>();
-
-    while (!open.empty()) {
-        QueueNode front = open.top();
-        open.pop();
-        if ((front.g + front.h) > *cutoff) {
-            *cutoff = (front.g + front.h);
-            ret.has_failed = true;
-            return ret;
-        }
-        if (!closed[front.node->toString()]) {
-            closed[front.node->toString()] = true;
-            if (state.is_goal(front.node)) {
-                ret.sol = state.extract_path(front.node);
-                return ret;
-            }
-
-            ret.expanded += 1;
-            ret.avg_h += state.h_value(front.node);
-
-            for (std::shared_ptr<Node> next: state.succ(front.node)) {
-                open.push(QueueNode {
-                    next,
-                    state.h_value(next) + next->path_cost,
-                    next->path_cost,
-                    ++cur_pos
-                });
-            }
-        }
+void idastar_search(std::shared_ptr<Node> n, State *state, ret_info *ret, int* f_max) {
+    int f = state->h_value(n) + n->path_cost;
+    ret->expanded += 1;
+    
+    if (f > *f_max) {
+        *f_max = f;
+        return;
     }
-    ret.has_failed = true;
-    return ret;
+
+    if (state->is_goal(n)) {
+        *f_max = 0;
+        ret->sol = state->extract_path(n);
+        return;
+    }
+    int next_limit = 99999;
+    int rec_limit = 0;
+    for (std::shared_ptr<Node> next: state->succ(n)) {
+        idastar_search(next, state, ret, &rec_limit);
+        if (!ret->sol.empty()) return;
+        next_limit = min(next_limit, rec_limit);
+    }
+    
+    *f_max = next_limit;
 }
 
 
@@ -309,20 +284,20 @@ template<typename State>
 ret_info idastar(State state) {
     ret_info ret, ret_iter;
     clock_t start, end;
-    const int max_f = 2000; //nao sei qual o valor certo daqui
+    const int max_f = 99999; //nao sei qual o valor certo daqui
     start = clock();
 
     std::shared_ptr<Node> n = state.init();
     ret.start_h = state.h_value(n);
     int cutoff_f = state.h_value(n);
-
+    idastar_closed = std::map<std::string, bool>();
     while(cutoff_f <= max_f) {
-        ret_iter = idastar_iter(state, &cutoff_f);
-        if(!ret_iter.has_failed) break;
+        idastar_search(n, &state, &ret, &cutoff_f);
+        if (!ret.sol.empty())
+            break;
     }
 
     end = clock();
-    ret.has_failed = ret_iter.has_failed;
     ret.time = double(end - start) / double(CLOCKS_PER_SEC);
     return ret;
 }

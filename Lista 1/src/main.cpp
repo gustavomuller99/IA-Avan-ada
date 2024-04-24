@@ -29,7 +29,7 @@ void solve(std::string alg, State s) {
     if (alg == "-bfs")
         f = bfs_graph<State>;
     if (alg == "-idastar")
-        {}
+        f = idastar<State>;
     if (alg == "-idfs")
         f = iter_deep<State>;
     if (alg == "-gbfs")
