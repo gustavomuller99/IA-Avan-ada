@@ -2,7 +2,7 @@
 
 #include "solvers/solvers.cpp"
 #include "state/state8.cpp"
-//#include "state/state16.cpp"
+#include "state/state15.cpp"
 
 template<typename State>
 void solve(std::string alg, State s);
@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
         for (std::vector<int> state : parse_states(argc, argv)) {
             if (state.size() == 9)
                 solve(argv[1], State8(state));
-            // else solve(argv[1], State16(state));
+            else solve(argv[1], State16(state));
         }
     }
 }
@@ -39,17 +39,11 @@ void solve(std::string alg, State s) {
 
     ret_info sol = f(s);
 
-
     std::cout << sol.expanded << ",";
     std::cout << sol.sol.size() - 1 << ",";
     std::cout << sol.time << std::setprecision(5) << ",";
     std::cout << (float) sol.avg_h / sol.expanded << std::setprecision(5) << ",";
     std::cout << sol.start_h << "\n";
-
-    /*for (std::shared_ptr<Node> &i : sol.sol) {
-        i->print();
-        std::cout << "\n";
-    }*/
 }
 
 std::vector<std::vector<int>> parse_states(int argc, char **argv) {
@@ -58,8 +52,14 @@ std::vector<std::vector<int>> parse_states(int argc, char **argv) {
 
     for (int i = 2; i < argc; ++i) {
         std::string arg = argv[i];
-        curr.push_back(arg[0] - '0');
-        if (arg.size() == 2) {
+
+        if ((arg.size() == 2 && arg[1] != ',') || arg.size() == 3) {
+            curr.push_back(stoi(arg.substr(0, 2)));
+        } else {
+            curr.push_back(arg[0] - '0');
+        }
+
+        if (arg[arg.size() - 1] == ',') {
             ret.push_back(curr);
             curr.clear();
         }

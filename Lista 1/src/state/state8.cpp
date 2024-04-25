@@ -6,13 +6,6 @@
 #include <vector>
 #include "node.cpp"
 
-enum Action {
-    up = 0,
-    down = 1,
-    right = 2,
-    left = 3
-};
-
 class State8 {
 public:
     State8(std::vector<int> state);

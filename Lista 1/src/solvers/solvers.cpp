@@ -252,47 +252,54 @@ ret_info astar(State state) {
     return ret;
 }
 
-std::map<std::string, bool> idastar_closed = std::map<std::string, bool>();
+
+/** IDA* */
+std::map<std::string, bool> ida_closed = std::map<std::string, bool>();
 template<typename State>
-void idastar_search(std::shared_ptr<Node> n, State *state, ret_info *ret, int* f_max) {
+int idastar_search(std::shared_ptr<Node> n, State *state, ret_info *ret, int f_limit) {
+
     int f = state->h_value(n) + n->path_cost;
-    ret->expanded += 1;
-    
-    if (f > *f_max) {
-        *f_max = f;
-        return;
+    if (f > f_limit) {
+        return f;
     }
+
+    if (ida_closed[n->toString()]) return INT_MAX;
+    ida_closed[n->toString()] = true;
+
 
     if (state->is_goal(n)) {
-        *f_max = 0;
         ret->sol = state->extract_path(n);
-        return;
+        return 0;
     }
-    int next_limit = 99999;
-    int rec_limit = 0;
+
+    ret->avg_h += state->h_value(n);
+    ret->expanded += 1;
+
+    int next_limit = INT_MAX;
     for (std::shared_ptr<Node> next: state->succ(n)) {
-        idastar_search(next, state, ret, &rec_limit);
-        if (!ret->sol.empty()) return;
-        next_limit = min(next_limit, rec_limit);
+        int rec_limit = idastar_search(next, state, ret, f_limit);
+        if (!ret->sol.empty())
+            return 0;
+        next_limit = std::min(next_limit, rec_limit);
     }
     
-    *f_max = next_limit;
+    return next_limit;
 }
-
 
 template<typename State>
 ret_info idastar(State state) {
-    ret_info ret, ret_iter;
+    ret_info ret;
     clock_t start, end;
     const int max_f = 99999; //nao sei qual o valor certo daqui
     start = clock();
 
     std::shared_ptr<Node> n = state.init();
     ret.start_h = state.h_value(n);
-    int cutoff_f = state.h_value(n);
-    idastar_closed = std::map<std::string, bool>();
-    while(cutoff_f <= max_f) {
-        idastar_search(n, &state, &ret, &cutoff_f);
+    int f_limit = state.h_value(n);
+
+    while(f_limit <= max_f) {
+        ida_closed = std::map<std::string, bool>();
+        f_limit = idastar_search(n, &state, &ret, f_limit);
         if (!ret.sol.empty())
             break;
     }

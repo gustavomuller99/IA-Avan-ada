@@ -4,6 +4,13 @@
 #include <utility>
 #include <vector>
 
+enum Action {
+    up = 0,
+    down = 1,
+    right = 2,
+    left = 3
+};
+
 class Node {
 public:
     Node(std::vector<int> state, std::shared_ptr<Node> parent, int cost, int action);
