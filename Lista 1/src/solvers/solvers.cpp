@@ -6,6 +6,7 @@
 #include <map>
 
 const int MAX_DEPTH = 1e7;
+const int MAX_H = 100;
 
 struct ret_info {
     int expanded = 0;
@@ -13,7 +14,6 @@ struct ret_info {
     std::vector<std::shared_ptr<Node>> sol = {};
     int start_h = 0;
     int avg_h = 0;
-    bool has_failed = false;
 };
 
 /** BFS GRAPH */
@@ -77,7 +77,7 @@ ret_info iter_deep(State state) {
 
     for (int i = 0; i < MAX_DEPTH; ++i) {
         dfs_closed = std::map<std::string, bool>();
-        dfs(n, &state, &ret, i);
+        dfs_iter_deep(n, &state, &ret, i);
         if (!ret.sol.empty())
             break;
     }
@@ -88,7 +88,7 @@ ret_info iter_deep(State state) {
 }
 
 template<typename State>
-void dfs(std::shared_ptr<Node> n, State *state, ret_info *ret, int depth) {
+void dfs_iter_deep(std::shared_ptr<Node> n, State *state, ret_info *ret, int depth) {
 
     std::string v = n->toString(); v.push_back((char) depth);
     if (dfs_closed[v]) return;
@@ -102,7 +102,7 @@ void dfs(std::shared_ptr<Node> n, State *state, ret_info *ret, int depth) {
     if (depth > 0) {
         ret->expanded += 1;
         for (std::shared_ptr<Node> next: state->succ(n)) {
-            dfs(next, state, ret, depth - 1);
+            dfs_iter_deep(next, state, ret, depth - 1);
             if (!ret->sol.empty())
                 return;
         }
@@ -256,7 +256,7 @@ ret_info astar(State state) {
 /** IDA* */
 std::map<std::string, bool> ida_closed = std::map<std::string, bool>();
 template<typename State>
-int idastar_search(std::shared_ptr<Node> n, State *state, ret_info *ret, int f_limit) {
+int dfs_idastar(std::shared_ptr<Node> n, State *state, ret_info *ret, int f_limit) {
 
     int f = state->h_value(n) + n->path_cost;
     if (f > f_limit) {
@@ -277,7 +277,7 @@ int idastar_search(std::shared_ptr<Node> n, State *state, ret_info *ret, int f_l
 
     int next_limit = INT_MAX;
     for (std::shared_ptr<Node> next: state->succ(n)) {
-        int rec_limit = idastar_search(next, state, ret, f_limit);
+        int rec_limit = dfs_idastar(next, state, ret, f_limit);
         if (!ret->sol.empty())
             return 0;
         next_limit = std::min(next_limit, rec_limit);
@@ -290,16 +290,15 @@ template<typename State>
 ret_info idastar(State state) {
     ret_info ret;
     clock_t start, end;
-    const int max_f = 99999; //nao sei qual o valor certo daqui
     start = clock();
 
     std::shared_ptr<Node> n = state.init();
     ret.start_h = state.h_value(n);
     int f_limit = state.h_value(n);
 
-    while(f_limit <= max_f) {
+    while(f_limit <= MAX_H) {
         ida_closed = std::map<std::string, bool>();
-        f_limit = idastar_search(n, &state, &ret, f_limit);
+        f_limit = dfs_idastar(n, &state, &ret, f_limit);
         if (!ret.sol.empty())
             break;
     }

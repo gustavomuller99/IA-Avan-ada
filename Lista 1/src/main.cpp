@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
         for (std::vector<int> state : parse_states(argc, argv)) {
             if (state.size() == 9)
                 solve(argv[1], State8(state));
-            else solve(argv[1], State16(state));
+            else solve(argv[1], State15(state));
         }
     }
 }
