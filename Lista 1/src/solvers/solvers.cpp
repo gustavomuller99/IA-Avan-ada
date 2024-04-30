@@ -7,6 +7,7 @@
 
 const int MAX_DEPTH = 1e7;
 const int MAX_H = 100;
+const float MAX_TIME = 180.0;
 
 struct ret_info {
     int expanded = 0;
@@ -223,6 +224,9 @@ ret_info astar(State state) {
     while (!open.empty()) {
         QueueNode front = open.top();
         open.pop();
+
+        end = clock();
+        if (double(end - start) / double(CLOCKS_PER_SEC) >= MAX_TIME) return {};
 
         if (!closed[front.node->toString()]) {
             closed[front.node->toString()] = true;

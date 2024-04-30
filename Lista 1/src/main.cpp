@@ -4,30 +4,30 @@
 #include "state/state8.cpp"
 #include "state/state15.cpp"
 
-#define FILE_RUN 1
-#define INPUT_USED 0
+#define FILE_RUN 0
 #ifdef FILE_RUN
+
 #include <fstream>
 #include <string>
 #include <sstream>
+
 #endif
 
 template<typename State>
-void solve(std::string alg, State s, ret_info *solver_out=NULL);
-
+ret_info solve(std::string alg, State s);
 
 std::vector<std::vector<int>> parse_states(int argc, char **argv);
 
 int main(int argc, char **argv) {
-    if (FILE_RUN == 0){
+    if (FILE_RUN == 0) {
         if (argc < 2) {
             std::cout << "Invalid solver choice\n";
             return 0;
         } else {
             for (std::vector<int> state : parse_states(argc, argv)) {
                 if (state.size() == 9)
-                    solve(argv[1], State8(state), NULL);
-                else solve(argv[1], State15(state), NULL);
+                    solve(argv[1], State8(state));
+                else solve(argv[1], State15(state));
             }
         }
     } else {
@@ -40,27 +40,24 @@ int main(int argc, char **argv) {
         long int avg_avg_h = 0;
         long int avg_sol_size = 0;
         std::string line, out_line;
-        while(std::getline(in_state8, line)) {
-            //std::cout << "here" << std::endl;
-            ret_info solver_out;
+        while (std::getline(in_state8, line)) {
             int aux;
             std::istringstream iss(line);
             std::vector<int> state;
             while ((iss >> aux)) {
                 state.push_back(aux);
             }
-            //std::cout << "solve" << std::endl;
-            solve(argv[1], State15(state), &solver_out);
+            ret_info solver_out = solve(argv[1], State15(state));
             ++instance_count;
             avg_expanded += solver_out.expanded;
             avg_time += solver_out.time;
             avg_start_h += solver_out.start_h;
             avg_avg_h += solver_out.avg_h;
-            avg_sol_size += solver_out.sol.size()-1;
+            avg_sol_size += solver_out.sol.size() - 1;
             out_line = std::to_string(solver_out.expanded) + " " + std::to_string(solver_out.time) +
-            " " + std::to_string(solver_out.start_h) + " " + std::to_string(solver_out.avg_h) + " " + std::to_string(solver_out.sol.size());
+                       " " + std::to_string(solver_out.start_h) + " " + std::to_string(solver_out.avg_h) + " " +
+                       std::to_string(solver_out.sol.size());
             out_state8 << out_line << std::endl;
-            //printf("\n###############################################################################\n");
         }
         avg_expanded /= instance_count;
         avg_time /= instance_count;
@@ -68,13 +65,14 @@ int main(int argc, char **argv) {
         avg_avg_h /= instance_count;
         avg_sol_size /= instance_count;
         out_state8 << "###############################################################################" << std::endl;
-        out_line = std::to_string(avg_expanded)+" "+std::to_string(avg_time)+" "+std::to_string(avg_start_h)+" "+std::to_string(avg_avg_h)+" "+std::to_string(avg_sol_size);
+        out_line = std::to_string(avg_expanded) + " " + std::to_string(avg_time) + " " + std::to_string(avg_start_h) +
+                   " " + std::to_string(avg_avg_h) + " " + std::to_string(avg_sol_size);
         out_state8 << out_line << std::endl;
     }
 }
 
 template<typename State>
-void solve(std::string alg, State s, ret_info *solver_out) {
+ret_info solve(std::string alg, State s) {
     std::function<ret_info(State)> f;
 
     if (alg == "-bfs")
@@ -89,13 +87,15 @@ void solve(std::string alg, State s, ret_info *solver_out) {
         f = astar<State>;
 
     ret_info sol = f(s);
-    *solver_out = sol;
 
-    /* std::cout << sol.expanded << ",";
-    std::cout << sol.sol.size() - 1 << ",";
-    std::cout << sol.time << std::setprecision(5) << ",";
-    std::cout << (float) sol.avg_h / sol.expanded << std::setprecision(5) << ",";
-    std::cout << sol.start_h << "\n"; */
+    if (FILE_RUN == 0) {
+        std::cout << sol.expanded << ",";
+        std::cout << sol.sol.size() - 1 << ",";
+        std::cout << sol.time << std::setprecision(5) << ",";
+        std::cout << (float) sol.avg_h / sol.expanded << std::setprecision(5) << ",";
+        std::cout << sol.start_h << "\n";
+    }
+    return sol;
 }
 
 std::vector<std::vector<int>> parse_states(int argc, char **argv) {
