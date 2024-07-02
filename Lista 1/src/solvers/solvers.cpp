@@ -66,7 +66,6 @@ ret_info bfs_graph(State state) {
 
 
 /** ITERATIVE DEEPENING */
-std::map<std::string, bool> dfs_closed = std::map<std::string, bool>();
 template<typename State>
 ret_info iter_deep(State state) {
     ret_info ret;
@@ -77,7 +76,6 @@ ret_info iter_deep(State state) {
     ret.start_h = state.h_value(n);
 
     for (int i = 0; i < MAX_DEPTH; ++i) {
-        dfs_closed = std::map<std::string, bool>();
         dfs_iter_deep(n, &state, &ret, i);
         if (!ret.sol.empty())
             break;
@@ -92,8 +90,6 @@ template<typename State>
 void dfs_iter_deep(std::shared_ptr<Node> n, State *state, ret_info *ret, int depth) {
 
     std::string v = n->toString(); v.push_back((char) depth);
-    if (dfs_closed[v]) return;
-    dfs_closed[v] = true;
 
     if (state->is_goal(n)) {
         ret->sol = state->extract_path(n);
@@ -258,7 +254,6 @@ ret_info astar(State state) {
 
 
 /** IDA* */
-std::map<std::string, bool> ida_closed = std::map<std::string, bool>();
 template<typename State>
 int dfs_idastar(std::shared_ptr<Node> n, State *state, ret_info *ret, int f_limit) {
 
@@ -266,10 +261,6 @@ int dfs_idastar(std::shared_ptr<Node> n, State *state, ret_info *ret, int f_limi
     if (f > f_limit) {
         return f;
     }
-
-    if (ida_closed[n->toString()]) return INT_MAX;
-    ida_closed[n->toString()] = true;
-
 
     if (state->is_goal(n)) {
         ret->sol = state->extract_path(n);
@@ -301,7 +292,6 @@ ret_info idastar(State state) {
     int f_limit = state.h_value(n);
 
     while(f_limit <= MAX_H) {
-        ida_closed = std::map<std::string, bool>();
         f_limit = dfs_idastar(n, &state, &ret, f_limit);
         if (!ret.sol.empty())
             break;
